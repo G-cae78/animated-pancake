@@ -2,6 +2,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <string.h>
+#include <sys/resource.h>
 #include "HeaderTemplate.h"
 
 // Run with  cd "/Users/"Username"/Documents/Fourth Year/Computer and Network Security/Assignment 2" && gcc -o OpenSSL OpenSSL.c -lcrypto 2>&1
@@ -24,14 +25,16 @@ int main (void)
 
     int decryptedtext_len, ciphertext_len;
     /* Encrypt the plaintext */
-    ciphertext_len = encrypt(plaintext, key, ciphertext);
+    ciphertext_len = encrypt(plaintext, key, ciphertext, EVP_aes_256_cbc());
     printf("Ciphertext length is %d:\n", ciphertext_len);
     BIO_dump_fp(stdout, (const unsigned char *)ciphertext, ciphertext_len);
 
     printf("\n");
 
     /* Decrypt the ciphertext */
-    decryptedtext_len = decrypt(ciphertext, key, ciphertext_len, decryptedtext);
+    print_cpu_time("Before decryption");
+    decryptedtext_len = decrypt(ciphertext, key, ciphertext_len, decryptedtext, EVP_aes_256_cbc());
+    print_cpu_time("After decryption");
     printf("Decrypted text length is %d:\n", decryptedtext_len);
    
     decryptedtext[decryptedtext_len] = '\0'; // Null-terminate the decrypted text
@@ -54,7 +57,7 @@ int main (void)
     return 0;
 }
 
-int encrypt(unsigned char *plaintext, unsigned char *key, unsigned char *ciphertext) {
+int encrypt(unsigned char *plaintext, unsigned char *key, unsigned char *ciphertext, const EVP_CIPHER *cipher) {
     EVP_CIPHER_CTX *ctx;
 
     int len;
@@ -65,7 +68,7 @@ int encrypt(unsigned char *plaintext, unsigned char *key, unsigned char *ciphert
     if(!(ctx = EVP_CIPHER_CTX_new())) handleErrors();
 
     /* Initialise the encryption operation. */
-    if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, NULL))
+    if(1 != EVP_EncryptInit_ex(ctx, cipher, NULL, key, NULL))
         handleErrors();
 
     /* Provide the message to be encrypted, and obtain the encrypted output. */
@@ -83,7 +86,7 @@ int encrypt(unsigned char *plaintext, unsigned char *key, unsigned char *ciphert
     return ciphertext_len;
 }
 
-int decrypt(unsigned char *ciphertext, unsigned char *key, int ciphertext_len, unsigned char *decryptedtext) {
+int decrypt(unsigned char *ciphertext, unsigned char *key, int ciphertext_len, unsigned char *decryptedtext, const EVP_CIPHER *cipher) {
     EVP_CIPHER_CTX *ctx;
 
     int len;
@@ -94,7 +97,7 @@ int decrypt(unsigned char *ciphertext, unsigned char *key, int ciphertext_len, u
     if(!(ctx = EVP_CIPHER_CTX_new())) handleErrors();
 
     /* Initialise the decryption operation. */
-    if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, NULL))
+    if(1 != EVP_DecryptInit_ex(ctx, cipher, NULL, key, NULL))
         handleErrors();
 
     /* Provide the message to be decrypted, and obtain the plaintext output. */
@@ -116,4 +119,17 @@ void handleErrors(void)
 {
     ERR_print_errors_fp(stderr);
     abort();
+}
+
+void print_cpu_time(char* label) {
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    
+    double user_time = (double)usage.ru_utime.tv_sec + (double)usage.ru_utime.tv_usec / 1e6;
+    double sys_time = (double)usage.ru_stime.tv_sec + (double)usage.ru_stime.tv_usec / 1e6;
+    
+    printf("%s CPU time:\n", label);
+    printf("User CPU time: %f s\n", user_time);
+    printf("System CPU time: %f s\n", sys_time);
+    printf("Total CPU time: %f s\n\n", user_time + sys_time);
 }
