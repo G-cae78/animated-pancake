@@ -5,5 +5,7 @@
 #define FILENAME /* This expression makes sure that this header file is only included once. */
 
 /* Add all your function prototypes, macros, #defines, etc. below. */
-
+void handleErrors(void);
+int encrypt(unsigned char *plaintext, unsigned char *key, unsigned char *ciphertext);
+int decrypt(unsigned char *ciphertext, unsigned char *key, unsigned char *decryptedtext);
 #endif
