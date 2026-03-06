@@ -7,5 +7,5 @@
 /* Add all your function prototypes, macros, #defines, etc. below. */
 void handleErrors(void);
 int encrypt(unsigned char *plaintext, unsigned char *key, unsigned char *ciphertext);
-int decrypt(unsigned char *ciphertext, unsigned char *key, unsigned char *decryptedtext);
+int decrypt(unsigned char *ciphertext, unsigned char *key, int ciphertext_len, unsigned char *decryptedtext);
 #endif

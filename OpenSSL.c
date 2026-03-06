@@ -4,7 +4,7 @@
 #include <string.h>
 #include "HeaderTemplate.h"
 
-// Run with  cd "/Users/georgea.e/Documents/Fourth Year/Computer and Network Security/Assignment 2" && gcc -o OpenSSL OpenSSL.c -lcrypto 2>&1
+// Run with  cd "/Users/"Username"/Documents/Fourth Year/Computer and Network Security/Assignment 2" && gcc -o OpenSSL OpenSSL.c -lcrypto 2>&1
 int main (void)
 {
     /* Load the human readable error strings for libcrypto */
@@ -31,7 +31,7 @@ int main (void)
     printf("\n");
 
     /* Decrypt the ciphertext */
-    decryptedtext_len = decrypt(ciphertext, key, decryptedtext);
+    decryptedtext_len = decrypt(ciphertext, key, ciphertext_len, decryptedtext);
     printf("Decrypted text length is %d:\n", decryptedtext_len);
    
     decryptedtext[decryptedtext_len] = '\0'; // Null-terminate the decrypted text
@@ -40,6 +40,16 @@ int main (void)
     /* Clean up */
     EVP_cleanup();
     ERR_free_strings();
+    
+    /* 
+      Console output should be:
+      Ciphertext length is 16:
+        0000 - 7a ce 0e 4f 0f fe 35 39-ff 1d 7a b1 ac 31 07 8d   z..O..59..z..1..
+
+      Decrypted text length is 12:
+      Decrypted text is:
+      Hello World!
+    */
 
     return 0;
 }
@@ -73,7 +83,7 @@ int encrypt(unsigned char *plaintext, unsigned char *key, unsigned char *ciphert
     return ciphertext_len;
 }
 
-int decrypt(unsigned char *ciphertext, unsigned char *key, unsigned char *decryptedtext) {
+int decrypt(unsigned char *ciphertext, unsigned char *key, int ciphertext_len, unsigned char *decryptedtext) {
     EVP_CIPHER_CTX *ctx;
 
     int len;
@@ -88,7 +98,7 @@ int decrypt(unsigned char *ciphertext, unsigned char *key, unsigned char *decryp
         handleErrors();
 
     /* Provide the message to be decrypted, and obtain the plaintext output. */
-    if(1 != EVP_DecryptUpdate(ctx, decryptedtext, &len, ciphertext, strlen((char *)ciphertext)))
+    if(1 != EVP_DecryptUpdate(ctx, decryptedtext, &len, ciphertext, ciphertext_len))
         handleErrors();
     decryptedtext_len = len;
 
