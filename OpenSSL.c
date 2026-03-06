@@ -2,8 +2,10 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <string.h>
-#include <sys/resource.h>
+#include <time.h>
 #include "HeaderTemplate.h"
+
+struct timespec start, end;
 
 // Run with  cd "/Users/"Username"/Documents/Fourth Year/Computer and Network Security/Assignment 2" && gcc -o OpenSSL OpenSSL.c -lcrypto 2>&1
 int main (void)
@@ -24,17 +26,25 @@ int main (void)
     unsigned char decryptedtext[128] = {0}; //Buffer for the decrypted text
 
     int decryptedtext_len, ciphertext_len;
+    double elapsed;
+
     /* Encrypt the plaintext */
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
     ciphertext_len = encrypt(plaintext, key, ciphertext, EVP_aes_256_cbc());
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+    elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    printf("Encrypt CPU time: %f s\n", elapsed);
     printf("Ciphertext length is %d:\n", ciphertext_len);
     BIO_dump_fp(stdout, (const unsigned char *)ciphertext, ciphertext_len);
 
     printf("\n");
 
     /* Decrypt the ciphertext */
-    print_cpu_time("Before decryption");
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
     decryptedtext_len = decrypt(ciphertext, key, ciphertext_len, decryptedtext, EVP_aes_256_cbc());
-    print_cpu_time("After decryption");
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+    elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    printf("Decrypt CPU time: %f s\n", elapsed);
     printf("Decrypted text length is %d:\n", decryptedtext_len);
    
     decryptedtext[decryptedtext_len] = '\0'; // Null-terminate the decrypted text
@@ -119,17 +129,4 @@ void handleErrors(void)
 {
     ERR_print_errors_fp(stderr);
     abort();
-}
-
-void print_cpu_time(char* label) {
-    struct rusage usage;
-    getrusage(RUSAGE_SELF, &usage);
-    
-    double user_time = (double)usage.ru_utime.tv_sec + (double)usage.ru_utime.tv_usec / 1e6;
-    double sys_time = (double)usage.ru_stime.tv_sec + (double)usage.ru_stime.tv_usec / 1e6;
-    
-    printf("%s CPU time:\n", label);
-    printf("User CPU time: %f s\n", user_time);
-    printf("System CPU time: %f s\n", sys_time);
-    printf("Total CPU time: %f s\n\n", user_time + sys_time);
 }

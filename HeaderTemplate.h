@@ -8,5 +8,4 @@
 void handleErrors(void);
 int encrypt(unsigned char *plaintext, unsigned char *key, unsigned char *ciphertext, const EVP_CIPHER *cipher);
 int decrypt(unsigned char *ciphertext, unsigned char *key, int ciphertext_len, unsigned char *decryptedtext, const EVP_CIPHER *cipher);
-void print_cpu_time(char* label);
 #endif
