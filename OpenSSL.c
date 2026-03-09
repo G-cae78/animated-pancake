@@ -5,82 +5,120 @@
 #include <time.h>
 #include "HeaderTemplate.h"
 #include <stdio.h>
-
+#include <stdlib.h>
 
 struct timespec start, end;
 
 /*  Run with  cd "/Users/"Username"/Documents/Fourth Year/Computer and Network Security/Assignment 2" && \
-    gcc -o OpenSSL OpenSSL.c Functions.c -lcrypto 2>&1 && ./OpenSSL*/ 
+    gcc -o OpenSSL OpenSSL.c Functions.c -lcrypto 2>&1 && ./OpenSSL*/
 
-    struct OpenSSLSettings
-    {
-        const EVP_CIPHER *cipher;
-    };
-    
+// struct OpenSSLSettings
+// {
+//     const EVP_CIPHER *cipher;
+//     const char *name;
+// };
+
 int main (void)
 {
-    /* Initialise the OpenSSL library AES, ARIA and CAMELLIA */
-    struct OpenSSLSettings settings[] = {{EVP_aes_128_ofb()}, 
-                                        {EVP_aria_128_ofb()}, 
-                                        {EVP_camellia_128_ofb()}};
-
     /* Load the human readable error strings for libcrypto */
     ERR_load_crypto_strings();
 
     /* Load all digest and cipher algorithms */
     OpenSSL_add_all_algorithms();
 
-    /* Your code goes here. */
+    /* Keys: 16 bytes = 128-bit, 32 bytes = 256-bit */
+    unsigned char key128[16] = "0123456789012345";
+    unsigned char key256[32] = "01234567890123456789012345678901";
 
-    /* Message to be encrypted */
-    unsigned char key[32] = "01234567890123456789012345678901"; 
+    unsigned char *keys[] = { key128, key256 };
+    int key_sizes[] = { 128, 256 };
 
-    unsigned char plaintext[128] = "Hello World!"; //Buffer for the plaintext
-    unsigned char ciphertext[128] = {0}; //Buffer for the ciphertext
-    unsigned char decryptedtext[128] = {0}; //Buffer for the decrypted text
+    /* Data sizes: 100 MB and 1000 MB */
+    size_t data_sizes[] = { 100UL * 1024 * 1024, 1000UL * 1024 * 1024 };
 
-    int decryptedtext_len, ciphertext_len;
+   
+    /* Cipher lookup per key size */
+    const EVP_CIPHER *cipher_table[2][9] = {
+        /* 128-bit encryption/decryption functions */
+        {
+            EVP_aes_128_ecb(), EVP_aes_128_cbc(), EVP_aes_128_ofb(),
+            EVP_aria_128_ecb(), EVP_aria_128_cbc(), EVP_aria_128_ofb(),
+            EVP_camellia_128_ecb(), EVP_camellia_128_cbc(), EVP_camellia_128_ofb(),
+        },
+        /* 256-bit encryption/decryption functions */
+        {
+            EVP_aes_256_ecb(), EVP_aes_256_cbc(), EVP_aes_256_ofb(),
+            EVP_aria_256_ecb(), EVP_aria_256_cbc(), EVP_aria_256_ofb(),
+            EVP_camellia_256_ecb(), EVP_camellia_256_cbc(), EVP_camellia_256_ofb(),
+        }
+    };
+
     double elapsed;
 
-    for (int i = 0; i < sizeof(settings) / sizeof(settings[0]); i++) {
-        printf("--------------------------------------------------\n");
-        printf("Using cipher: %s\n", EVP_CIPHER_name(settings[i].cipher));
-        /* Encrypt the plaintext */
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-        ciphertext_len = encrypt(plaintext, key, ciphertext, settings[i].cipher);
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-        elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-        printf("Encrypt CPU time: %f s\n", elapsed);
-        printf("Ciphertext length is %d:\n", ciphertext_len);
-        BIO_dump_fp(stdout, (const unsigned char *)ciphertext, ciphertext_len);
+    /* Outer loop: data sizes */
+    for (int d = 0; d < 2; d++) {
+        size_t data_len = data_sizes[d];
+        printf("\n==================================================\n");
+        printf("Data size: %zu MB\n", data_len / (1024 * 1024));
+        printf("==================================================\n");
 
-        printf("\n");
+        /* Allocate plaintext and output buffers once per data size */
+        unsigned char *plaintext     = malloc(data_len);
+        unsigned char *ciphertext    = malloc(data_len + EVP_MAX_BLOCK_LENGTH);
+        unsigned char *decryptedtext = malloc(data_len + EVP_MAX_BLOCK_LENGTH);
 
-        /* Decrypt the ciphertext */
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-        decryptedtext_len = decrypt(ciphertext, key, ciphertext_len, decryptedtext, settings[i].cipher);
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-        elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-        printf("Decrypt CPU time: %f s\n", elapsed);
-        printf("Decrypted text length is %d:\n", decryptedtext_len);
-    
-        decryptedtext[decryptedtext_len] = '\0'; // Null-terminate the decrypted text
-        printf("Decrypted text is:\n%s\n", decryptedtext);
+        if (!plaintext || !ciphertext || !decryptedtext) {
+            fprintf(stderr, "Memory allocation failed\n"); //errormessage if memory allocation fails
+            return 1;
+        }
 
-        /* Clean up */
-        EVP_cleanup();
-        ERR_free_strings();
+        /* Fill plaintext with repeated pattern */
+        memset(plaintext, 0x41, data_len);    // Fill memory with 'A's' (0x41)
+
+        /* Loop: key sizes */
+        for (int k = 0; k < 2; k++) {
+            printf("\n  Key size: %d-bit\n", key_sizes[k]);
+
+            /* Loop: cipher + mode combinations */
+            for (int i = 0; i < 9; i++) {
+                const EVP_CIPHER *cipher = cipher_table[k][i];
+
+                printf("--------------------------------------------------\n");
+                printf("Cipher: %s\n", EVP_CIPHER_name(cipher));
+
+                /* Encryption */
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+                int ciphertext_len = encrypt(plaintext, (int)data_len, keys[k], ciphertext, cipher);
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+                elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+                printf("Encrypt CPU time: %.6f s\n", elapsed);
+
+                /* Decryption */
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+                int decryptedtext_len = decrypt(ciphertext, keys[k], ciphertext_len, decryptedtext, cipher);
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+                elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+                printf("Decrypt CPU time: %.6f s\n", elapsed);
+                printf("Decrypted length: %d bytes\n", decryptedtext_len);
+                // decryptedtext[decryptedtext_len] = '\0'; // Null-terminate the decrypted text
+                // printf("Decrypted text is:\n%s\n", decryptedtext);
+
+                /* Verify correctness */
+                if (decryptedtext_len != (int)data_len || memcmp(plaintext, decryptedtext, data_len) != 0) {
+                    fprintf(stderr, "Decryption failed: output does not match original plaintext\n");
+                } 
+
+            }
+        }
+
+        free(plaintext);
+        free(ciphertext);
+        free(decryptedtext);
     }
-    
-    /* 
-      Console output should be:
-      Ciphertext length is 16:
-        0000 - 7a ce 0e 4f 0f fe 35 39-ff 1d 7a b1 ac 31 07 8d   z..O..59..z..1..
 
-      Decrypted text length is 12:
-      Decrypted text is:
-      Hello World!
-    */
+    /* Clean up once at the end */
+    EVP_cleanup();
+    ERR_free_strings();
 
     return 0;
 }

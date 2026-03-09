@@ -6,7 +6,7 @@
 #include "HeaderTemplate.h"
 #include <stdio.h>
 
-int encrypt(unsigned char *plaintext, unsigned char *key, unsigned char *ciphertext, const EVP_CIPHER *cipher) {
+int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key, unsigned char *ciphertext, const EVP_CIPHER *cipher) {
     EVP_CIPHER_CTX *ctx;
 
     int len;
@@ -21,7 +21,7 @@ int encrypt(unsigned char *plaintext, unsigned char *key, unsigned char *ciphert
         handleErrors();
 
     /* Provide the message to be encrypted, and obtain the encrypted output. */
-    if(1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, strlen((char *)plaintext)))
+    if(1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
         handleErrors();
     ciphertext_len = len;
 

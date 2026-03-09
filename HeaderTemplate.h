@@ -6,6 +6,6 @@
 
 /* Add all your function prototypes, macros, #defines, etc. below. */
 void handleErrors(void);
-int encrypt(unsigned char *plaintext, unsigned char *key, unsigned char *ciphertext, const EVP_CIPHER *cipher);
+int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key, unsigned char *ciphertext, const EVP_CIPHER *cipher);
 int decrypt(unsigned char *ciphertext, unsigned char *key, int ciphertext_len, unsigned char *decryptedtext, const EVP_CIPHER *cipher);
 #endif
