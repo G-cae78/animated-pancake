@@ -9,6 +9,7 @@
 void handleErrors(void);
 
 //Function prototypes for encryption and decryption functions (used for both OpenSSL.c and TripleDES.c)
-int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key, unsigned char *ciphertext, const EVP_CIPHER *cipher);
-int decrypt(unsigned char *ciphertext, unsigned char *key, int ciphertext_len, unsigned char *decryptedtext, const EVP_CIPHER *cipher);
+int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key, unsigned char *iv, unsigned char *ciphertext, const EVP_CIPHER *cipher);
+int decrypt(unsigned char *ciphertext, unsigned char *key, unsigned char *iv, int ciphertext_len, unsigned char *decryptedtext, const EVP_CIPHER *cipher);
+
 #endif

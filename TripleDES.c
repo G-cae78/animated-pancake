@@ -37,6 +37,10 @@ int main (void)
         EVP_des_ede3_ecb(), EVP_des_ede3_cbc()
     };
 
+    /* 8-byte IV for Triple-DES (64-bit block cipher) */
+    unsigned char iv[8] = {0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00};
+
     double elapsed;
 
     /* Outer loop: data sizes */
@@ -70,14 +74,14 @@ int main (void)
 
             /* Encryption */
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-            int ciphertext_len = encrypt(plaintext, (int)data_len, key3des, ciphertext, cipher);
+            int ciphertext_len = encrypt(plaintext, (int)data_len, key3des, iv, ciphertext, cipher);
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
             elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
             printf("  Encrypt CPU time: %.6f s\n", elapsed);
 
             /* Decryption */
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-            int decryptedtext_len = decrypt(ciphertext, key3des, ciphertext_len, decryptedtext, cipher);
+            int decryptedtext_len = decrypt(ciphertext, key3des, iv, ciphertext_len, decryptedtext, cipher);
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
             elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
             printf("  Decrypt CPU time: %.6f s\n", elapsed);
