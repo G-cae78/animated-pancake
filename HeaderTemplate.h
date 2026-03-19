@@ -8,4 +8,6 @@
 void handleErrors(void);
 int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key, unsigned char *ciphertext, const EVP_CIPHER *cipher);
 int decrypt(unsigned char *ciphertext, unsigned char *key, int ciphertext_len, unsigned char *decryptedtext, const EVP_CIPHER *cipher);
+void encrypt_TRIPLEDES(unsigned char *plaintext, int plaintext_len, unsigned char *key, unsigned char *ciphertext, const EVP_CIPHER *cipher);
+void decrypt_TRIPLEDES(unsigned char *ciphertext, unsigned char *key, int ciphertext_len, unsigned char *decryptedtext, const EVP_CIPHER *cipher);
 #endif
