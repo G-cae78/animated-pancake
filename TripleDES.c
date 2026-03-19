@@ -9,8 +9,8 @@
 
 struct timespec start, end;
 
-/*  Run with  cd "/Users/"Username"/Documents/Fourth Year/Computer and Network Security/Assignment 2" && \
-    gcc -o OpenSSL OpenSSL.c Functions.c -lcrypto 2>&1 && ./OpenSSL*/
+/*  Run with  cd "cd "/Users/"Username"/Documents/Fourth Year/Computer and Network Security/Assignment 2" && \
+    gcc -o TripleDES TripleDES.c Functions.c -lcrypto 2>&1 && ./TripleDES*/
 
 // struct OpenSSLSettings
 // {
@@ -32,7 +32,7 @@ int main (void)
     /* Data sizes: 100 MB and 1000 MB */
     size_t data_sizes[] = { 100UL * 1024 * 1024, 1000UL * 1024 * 1024 };
 
-    /* ECB and CBC modes */
+    /* ECB and CBC modes for 3DES Cipher */
     const EVP_CIPHER *cipher_table[2] = {
         EVP_des_ede3_ecb(), EVP_des_ede3_cbc()
     };

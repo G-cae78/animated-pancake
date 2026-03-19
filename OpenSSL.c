@@ -53,7 +53,7 @@ int main (void)
         }
     };
 
-    double elapsed;
+    double elapsed; //Store total elapsed time for encryption and decryption
 
     /* Outer loop: data sizes */
     for (int d = 0; d < 2; d++) {
